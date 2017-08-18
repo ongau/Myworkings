@@ -1,2 +1,37 @@
-begining
-start
+SELECT 
+    name,
+    location_id,
+    
+location_uuid,
+    COUNT(*) AS all_encounters,
+    
+COUNT(DISTINCT person_id) AS num_patients,
+    
+COUNT(DISTINCT IF(TIMESTAMPDIFF(WEEK,
+                
+vl_1_date,
+                
+encounter_datetime) <= 52
+              
+  AND vl_1 < 1000,
+            person_id,
+            NULL)) 
+AS vl_done_past_year_lte_1000,
+    COUNT(DISTINCT IF(TIMESTAMPDIFF(WEEK,
+  
+              vl_1_date,
+                encounter_datetime) <= 52
+               
+ AND vl_1 >= 1000,
+            person_id,
+            NULL)) AS vl_done_past_year_gt_100
+FROM
+    etl.flat_hiv_summary
+       
+ JOIN
+    amrs.location USING (location_id)
+WHERE
+    location_id IN (1 , 13, 14)
+       
+ AND encounter_datetime BETWEEN '2016-07-07' AND '2017-08-18'
+GROUP BY location_uuid WITH ROLLUP;
