@@ -1,3 +1,4 @@
+#Assignment code
 SELECT 
     name,
     location_id,
