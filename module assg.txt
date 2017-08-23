@@ -1,0 +1,57 @@
+SELECT 
+    name,
+    
+location_id,
+    
+location_uuid,
+    
+vl_1,
+    
+vl_1_date,
+    
+encounter_datetime,
+    
+encounter_type,
+    
+is_clinical_encounter
+,    
+rtc_date,
+    
+next_encounter_datetime_hiv,
+    
+next_clinical_datetime_hiv,
+    
+count(person_id) as all_patients,
+    
+count(if(timestampdiff(week,
+vl_1_date,
+encounter_datetime) <= 52
+                
+AND vl_1 < 1000,
+1,null)) AS suppressed_past_year_vl_less_1000,
+ 
+count(IF(TIMESTAMPDIFF(WEEK,
+vl_1_date,
+encounter_datetime) <= 52
+                
+AND vl_1 >= 1000,
+            
+person_id,
+NULL)) AS suppressed_past_year_vl_greater_1000
+
+FROM
+ etl.flat_hiv_summary
+        
+JOIN
+ amrs.location USING (location_id)
+
+WHERE
+ location_id IN (1 , 13, 14)
+     
+and is_clinical_encounter=1 
+   
+AND (next_clinical_datetime_hiv > "2017-07-31" or next_clinical_datetime_hiv is null)
+        
+AND encounter_datetime BETWEEN '2016-07-07' AND '2017-08-18'
+group by location_uuid
+;
