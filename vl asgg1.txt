@@ -1,0 +1,32 @@
+SELECT 
+    person_id,
+    
+location_id,
+    
+name AS location_name,
+    
+t1.uuid AS patient_uuid,
+    
+vl_1,
+    vl_1_date,
+    
+encounter_datetime,
+    
+TIMESTAMPDIFF(MONTH,now(),
+vl_1_date) as diff
+    
+FROM
+    etl.flat_hiv_summary t1
+        
+JOIN
+  amrs.location USING (location_id)
+
+WHERE
+ TIMESTAMPDIFF(MONTH,vl_1_date,now()
+) <= 3
+        
+AND vl_1 > 100
+        
+AND encounter_datetime BETWEEN '2017-01-01' AND '2017-08-17'
+        
+and next_encounter_datetime_hiv is null
