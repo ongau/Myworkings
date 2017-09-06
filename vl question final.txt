@@ -1,0 +1,55 @@
+/*write a query that produces a list of patients with viral loads > 1000 
+which are in the three months
+use flat_hiv_summary as your dataset*/
+
+(select 
+
+person_id, 
+endDate,
+vl_1_date,
+vl_1,
+
+(if(timestampdiff(month,vl_1_date,endDate) <= 3,1,null)) as Total_vl__past_3_months,
+	
+(if(timestampdiff(month,vl_1_date,endDate) <= 3 and vl_1 < 1000,1,null)) as vl_less_1000_past_3_months,
+	
+(if(timestampdiff(month,vl_1_date,endDate) <= 3 and vl_1 >= 1000,1,null)) as vl_greater_1000_past_3_months,
+    
+TIMESTAMPDIFF(MONTH,vl_1_date,endDate)
+	
+from etl.dates t1
+    
+join etl.flat_hiv_summary t2 on t2.encounter_datetime <= t1.endDate and (t2.next_encounter_datetime_hiv > t1.endDate or t2.next_encounter_datetime_hiv is null) 
+
+WHERE
+    TIMESTAMPDIFF(MONTH,vl_1_date,endDate) <= 3
+        
+and location_id = 3
+        
+and encounter_datetime >="2016-01-01"
+        
+order by person_id, endDate);
+
+
+#aggregate query
+(select year(endDate) as year, 
+month(endDate) as month,
+
+count(if(timestampdiff(month,vl_1_date,endDate) <= 3,1,null)) as Total_vl__past_3_months,
+	
+count(if(timestampdiff(month,vl_1_date,endDate) <= 3 and vl_1 < 1000,1,null)) as vl_less_1000_past_3_months,
+	
+count(if(timestampdiff(month,vl_1_date,endDate) <= 3 and vl_1 >= 1000,1,null)) as vl_greater_1000_past_3_months
+	
+from etl.dates t1
+    
+join etl.flat_hiv_summary t2 on t2.encounter_datetime <= t1.endDate and (t2.next_encounter_datetime_hiv > t1.endDate or t2.next_encounter_datetime_hiv is null) 
+
+WHERE
+ TIMESTAMPDIFF(MONTH,vl_1_date,endDate) <=3
+        
+and location_id = 3
+        
+and encounter_datetime >="2016-01-01"
+        
+group by year,month );
