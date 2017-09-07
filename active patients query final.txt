@@ -1,0 +1,76 @@
+/*write a query that counts all the active, ltfu (> 90 days from rtc),
+ dead, and other
+for turbo for each month starting Jan 1 to today*/
+
+(select 
+	
+endDate,
+	
+person_id, 
+	
+encounter_datetime,
+	
+encounter_type,
+	rtc_date,
+	
+timestampdiff(day,rtc_date, endDate),
+	
+timestampdiff(day,if(rtc_date,rtc_date,date_add(encounter_datetime, interval 90 day)), endDate),
+		
+location_id,
+		
+death_date,
+		
+transfer_out,
+		
+(if(datediff(endDate,if(rtc_date,rtc_date,date_add(encounter_datetime, interval 90 day))) < 90 and transfer_out is null
+,1,null)) as active_patients,
+		
+(if(datediff(endDate,if(rtc_date,rtc_date,date_add(encounter_datetime, interval 90 day))) >= 90 and transfer_out is null
+,1,null)) as lost_to_follow_up
+	
+from etl.dates t1
+		
+join etl.flat_hiv_summary t2 on t2.encounter_datetime <= t1.endDate and t2.is_clinical_encounter and (t2.next_clinical_datetime_hiv > t1.endDate or t2.next_clinical_datetime_hiv is null)
+		
+where datediff(curdate(),endDate) <= 365 
+		
+and encounter_datetime between "2016-01-01" and now()
+		
+and endDate <= now()
+			
+and location_id = 3 
+            
+limit 100);
+
+
+
+#aggregate 
+(select 
+	
+endDate,
+	
+location_id,
+		
+count(*) total,
+	count(transfer_out) as transfer_out,
+		
+count(if(datediff(endDate,if(rtc_date,rtc_date,date_add(encounter_datetime, interval 90 day))) < 90 and transfer_out is null
+,1,null)) as active_patients,
+		
+count(if(datediff(endDate,if(rtc_date,rtc_date,date_add(encounter_datetime, interval 90 day))) >= 90 and transfer_out is null
+,1,null)) as lost_to_follow_up
+	
+from etl.dates t1
+		
+join etl.flat_hiv_summary t2 on t2.encounter_datetime <= t1.endDate and t2.is_clinical_encounter and (t2.next_clinical_datetime_hiv > t1.endDate or t2.next_clinical_datetime_hiv is null)
+		
+where datediff(curdate(),endDate) <= 365 
+		
+and encounter_datetime between "2016-01-01" and now()
+		
+and endDate <= now()
+			
+and location_id = 3 
+         
+group by endDate);
